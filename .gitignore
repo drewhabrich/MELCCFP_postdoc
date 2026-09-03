@@ -1,0 +1,15 @@
+# folders 
+/data
+/outputs
+/.posit
+
+# R specific files
+.Rproj
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.posit/assistant
+.httr-oauth
+.DS_Store
+.quarto
