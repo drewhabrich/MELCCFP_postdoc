@@ -13,3 +13,6 @@
 .httr-oauth
 .DS_Store
 .quarto
+
+# other filetypes
+.md
