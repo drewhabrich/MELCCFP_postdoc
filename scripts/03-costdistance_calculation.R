@@ -41,7 +41,7 @@ library(dplyr)
 ## committing to a full multi-hour run across all 10).
 species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
 
-overwrite <- FALSE  # set TRUE to force recomputation of species already done
+overwrite <- TRUE  # set TRUE to force recomputation of species already done
 
 ## How far beyond an origin's candidate-destination bounding box to crop
 ## the resistance raster, as a fraction of that origin's farthest candidate
@@ -54,14 +54,14 @@ cd_buffer_min_m <- 1000
 ## How many origins to hand to the cluster per parLapplyLB() call.
 cd_batch_size <- 50
 
-n_cores <- max(1, parallel::detectCores() - 12)  # tune down if you want to keep using your machine for other things
+n_cores <- max(1, parallel::detectCores() - 10)  # tune down if you want to keep using your machine for other things
 
 ## 1. Load required files ---------------------------------------
-# nodes: sf POINT object (or polygon centroids) of protected areas,
-#        must have a unique `site_id` column
-nodes <- read_sf(here(output_dir, "pa_ctroidnodes.shp"))
-node_coords <- st_coordinates(nodes)
-rownames(node_coords) <- nodes$site_id
+# pa_patches: sf POLYGON object of protected areas, must have a unique
+# `site_id` column -- loaded as sf (not terra::vect) specifically because
+# sf objects serialize cleanly to parallel workers (see setup_cluster()
+# below), unlike a SpatVector.
+pa_patches <- read_sf(here(output_dir, "pa_patches.gpkg"))
 
 specieslist <- readxl::read_excel(here(data_dir, "specieslist.xlsx"))
 if (!is.null(species_subset)) {
@@ -69,31 +69,35 @@ if (!is.null(species_subset)) {
 }
 
 ## Compute cost-distance from one origin to all its candidate destinations,
-## on a crop of the resistance raster sized to just that origin's search
-## area. References `candidate_pairs` / `resistance_path` as free variables
-## -- exported to the cluster (setup_cluster(), below) each time they
-## change (i.e. each species).
+## edge-to-edge (patch boundary to patch boundary): the whole origin
+## polygon is marked as a zero-cost source region (terra::costDist()
+## already supports multi-cell sources), and each destination's cost is
+## the MINIMUM accumulated cost over its own polygon's cells -- i.e. the
+## cost to whichever point on that patch's boundary is cheapest to reach,
+## not to a single centroid. Both on a crop of the resistance raster sized
+## to just this origin's search area. References `candidate_pairs` /
+## `resistance_path` as free variables -- exported to the cluster
+## (setup_cluster(), below) each time they change (i.e. each species).
 cost_distance_for_origin <- function(origin_id, buffer_mult = 1) {
-  origin_xy <- node_coords[as.character(origin_id), , drop = FALSE]
+  origin_poly <- pa_patches[as.character(pa_patches$site_id) == as.character(origin_id), ]
 
   dest_pairs <- candidate_pairs  |>  filter(from == origin_id)
   dest_ids <- dest_pairs |> pull(to)
-  dest_xy <- node_coords[as.character(dest_ids), , drop = FALSE]
+  # match(), not %in% filtering, to guarantee dest_polys is in the same
+  # order as dest_ids -- extract()'s output order follows the polygon
+  # input order, and it needs to line up with dest_ids below.
+  dest_polys <- pa_patches[match(as.character(dest_ids), as.character(pa_patches$site_id)), ]
 
-  all_xy <- rbind(origin_xy, dest_xy)
   buffer_dist <- max(max(dest_pairs$euclidean_dist) * cd_buffer_frac, cd_buffer_min_m) * buffer_mult
-
-  crop_ext <- ext(
-    min(all_xy[, 1]) - buffer_dist, max(all_xy[, 1]) + buffer_dist,
-    min(all_xy[, 2]) - buffer_dist, max(all_xy[, 2]) + buffer_dist
-  )
+  crop_ext <- ext(vect(rbind(origin_poly, dest_polys))) + buffer_dist
 
   friction <- crop(rast(resistance_path), crop_ext)
-  origin_cell <- cellFromXY(friction, origin_xy)
-  friction[origin_cell] <- sentinel_value
+
+  origin_mask <- rasterize(vect(origin_poly), friction)
+  friction <- ifel(!is.na(origin_mask), sentinel_value, friction)
 
   cost_surface <- costDist(friction, target = sentinel_value, scale = 1)
-  cost_vals <- terra::extract(cost_surface, dest_xy)[[1]]
+  cost_vals <- terra::extract(cost_surface, vect(dest_polys), fun = "min", na.rm = TRUE)[[2]]
 
   terra::tmpFiles(remove = TRUE)
 
@@ -116,7 +120,7 @@ setup_cluster <- function() {
     library(terra); library(sf); library(dplyr); library(tibble)
   })
   parallel::clusterExport(new_cl, varlist = c(
-    "node_coords", "sentinel_value", "cd_buffer_frac", "cd_buffer_min_m",
+    "pa_patches", "sentinel_value", "cd_buffer_frac", "cd_buffer_min_m",
     "cost_distance_for_origin"
   ))
   new_cl

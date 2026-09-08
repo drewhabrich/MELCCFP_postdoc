@@ -529,6 +529,15 @@ pa_model_10km2 <- pa_model %>%
 pa_model_5km2 <- pa_model %>%
   filter(area >= (5000*1000)) #5km2 filter
 
+## Simplify boundaries: at 30 m (this pipeline's raster resolution) 
+## boundary shape is preserved while vertex count drops substantially, 
+## This speeds up every later sf distance/geometry operation on these polygons (scripts 01, 05).
+simplify_tolerance_m <- 30
+pa_model_10km2 <- st_simplify(pa_model_10km2, dTolerance = simplify_tolerance_m,
+                               preserveTopology = TRUE)
+pa_model_5km2 <- st_simplify(pa_model_5km2, dTolerance = simplify_tolerance_m,
+                              preserveTopology = TRUE)
+
 # Write to file
 st_write(pa_model_10km2, 
          file.path(interm_dir, "pa_model_10km2.shp"),

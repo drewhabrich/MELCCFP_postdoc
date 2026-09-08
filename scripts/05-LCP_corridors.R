@@ -110,9 +110,10 @@ if (!is.null(species_subset)) {
   specieslist <- specieslist %>% filter(species %in% species_subset)
 }
 
-pa_nodes <- st_read(here(output_dir, "pa_ctroidnodes.shp"), quiet = TRUE)
-node_coords <- st_coordinates(pa_nodes)
-rownames(node_coords) <- pa_nodes$site_id
+## pa_patches: sf POLYGON object of protected areas -- loaded as sf (not
+## terra::vect) specifically because sf objects serialize cleanly to
+## parallel workers, unlike a SpatVector (see setup_cluster() below).
+pa_patches <- read_sf(here(output_dir, "pa_patches.gpkg"))
 
 dir_corridors <- here(interm_dir, "corridors")
 if (!dir.exists(dir_corridors)) dir.create(dir_corridors)
@@ -160,9 +161,21 @@ attempt_edge_lcp <- function(from_xy, to_xy, resistance_path, buffer_mult) {
 }
 
 ## Trace one MST edge's LCP, retrying once with a doubled buffer on failure.
+## Edge-to-edge (patch boundary to patch boundary): from_xy/to_xy are the
+## geometrically nearest points between the two PA polygons' boundaries
+## (sf::st_nearest_points()), not centroids -- cheap to compute, and a
+## much better proxy for where a disperser would actually enter/leave each
+## patch than its center. attempt_edge_lcp() itself doesn't change; only
+## where from_xy/to_xy come from.
 trace_edge_lcp <- function(from_id, to_id, resistance_path) {
-  from_xy <- node_coords[from_id, , drop = FALSE]
-  to_xy   <- node_coords[to_id, , drop = FALSE]
+  origin_poly <- pa_patches[as.character(pa_patches$site_id) == from_id, ]
+  dest_poly   <- pa_patches[as.character(pa_patches$site_id) == to_id, ]
+
+  nearest_line <- sf::st_nearest_points(origin_poly, dest_poly)
+  nearest_coords <- sf::st_coordinates(nearest_line)
+
+  from_xy <- nearest_coords[1, c("X", "Y"), drop = FALSE]
+  to_xy   <- nearest_coords[2, c("X", "Y"), drop = FALSE]
 
   result <- attempt_edge_lcp(from_xy, to_xy, resistance_path, buffer_mult = 1)
   if (is.null(result)) {
@@ -192,7 +205,7 @@ lcp_worker <- function(j) {
 }
 
 ## Builds a fresh cluster with everything that doesn't change across species
-## already exported (node_coords, buffer settings, the tracing functions).
+## already exported (pa_patches, buffer settings, the tracing functions).
 ## Used for the initial cluster and again if a worker dies mid-run.
 setup_cluster <- function() {
   new_cl <- parallel::makeCluster(n_cores)
@@ -200,7 +213,7 @@ setup_cluster <- function() {
     library(terra); library(sf); library(gdistance); library(raster)
   })
   parallel::clusterExport(new_cl, varlist = c(
-    "node_coords", "lcp_buffer_frac", "lcp_buffer_min_m", "lcp_buffer_max_m",
+    "pa_patches", "lcp_buffer_frac", "lcp_buffer_min_m", "lcp_buffer_max_m",
     "attempt_edge_lcp", "trace_edge_lcp", "lcp_worker"
   ))
   new_cl
