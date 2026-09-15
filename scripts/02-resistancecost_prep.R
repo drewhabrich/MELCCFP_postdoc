@@ -24,7 +24,7 @@
 # Adding a new species only ever means adding a row to
 # species_metadata.csv -- this script doesn't change either way.
 # ============================================================
-source(file.path("scripts", "setup_script.R"))
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
 
 # 1. Load required files ---------------------------------------
 landcover <- rast(here(data_dir, "lulc_road_model.tif"))
@@ -63,15 +63,17 @@ if (!dir.exists(table_dir)) dir.create(table_dir, recursive = TRUE)
 species_landcover_resistance <- list()
 
 ## TEST SUBSET WITH MAAM AND DOOR
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
 if (!is.null(species_subset)) {
   species_meta <- species_meta %>% filter(species %in% species_subset)
 }
 
+overwrite <- FALSE  # set FALSE to skip species that already have a {species}_res.tif
+
 for (i in seq_len(nrow(species_meta))) {
   sp <- species_meta$species[i]
-  message("Building resistance raster for: ", sp)
-  
+  out_path <- here(output_dir, "resistance", paste0(sp, "_res.tif"))
+
   landcover_rank_tbl <- read_csv(species_meta$landcover_rank_csv[i], show_col_types = FALSE)
   forest_type_rank_tbl <- read_csv(species_meta$forest_type_rank_csv[i], show_col_types = FALSE)
   age_penalty_tbl <- read_csv(species_meta$age_penalty_csv[i], show_col_types = FALSE)
@@ -79,7 +81,9 @@ for (i in seq_len(nrow(species_meta))) {
   ## Rank -> resistance (2^rank) for this species' landcover classes AND
   ## forest types (conif/decid/mixed -- each type's own resistance, not
   ## combined with an age penalty), labeled with class names -- stashed for
-  ## the combined table written after the loop.
+  ## the combined table written after the loop. Kept outside the
+  ## overwrite check below (cheap, CSV-only) so the combined table stays
+  ## complete even for species whose raster is being skipped.
   landcover_long <- landcover_rank_tbl %>%
     left_join(landcover_lookup, by = c("cover_class" = "LULC_code")) %>%
     mutate(resistance = 2^rank) %>%
@@ -93,6 +97,13 @@ for (i in seq_len(nrow(species_meta))) {
   species_landcover_resistance[[sp]] <- bind_rows(landcover_long, forest_type_long) %>%
     mutate(species = sp) %>%
     dplyr::select(species, class, resistance)
+
+  if (file.exists(out_path) && !overwrite) {
+    message(sp, ": ", out_path, " already exists -- skipping (set overwrite <- TRUE to redo).")
+    next
+  }
+
+  message("Building resistance raster for: ", sp)
 
   lulc_rank <- classify(landcover, as.matrix(landcover_rank_tbl))
   forest_type_rank <- classify(forest_type, as.matrix(forest_type_rank_tbl))
@@ -117,7 +128,6 @@ for (i in seq_len(nrow(species_meta))) {
   # true doubling scale: rank 0 -> 1, each rank step doubles the cost
   species_resistance <- 2^total_rank
 
-  out_path <- here(output_dir, "resistance", paste0(sp, "_res.tif"))
   writeRaster(species_resistance, out_path, overwrite = TRUE)
 
   message("  -> saved ", out_path, " (max_rank = ", max_rank, ")")

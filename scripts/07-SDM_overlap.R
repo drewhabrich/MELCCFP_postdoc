@@ -38,16 +38,17 @@
 # the full study area outline regardless of the raster's own extent. Only
 # the raster DATA stays small; the figure's context doesn't change.
 # ============================================================
-source(file.path("scripts", "setup_script.R"))
-library(ggplot2)
-library(tidyterra)
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
+# library(ggplot2)
+# library(tidyterra)
+# library(ggnewscale)
 
 ## ---- Sample test: restrict to a couple of example species ----
 ## Set to NULL to run the full species list; set to a vector of species
 ## codes to test/compare just those species instead.
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
 
-overwrite <- FALSE  # set TRUE to force recomputation of species already done
+overwrite <- TRUE  # set TRUE to force recomputation of species already done
 
 ## Fraction of the corridor density raster's lowest values to treat as
 ## noise (set to NA before rescaling), e.g. 0.1 = drop the bottom 10%.
@@ -122,21 +123,28 @@ for (i in seq_len(nrow(species_meta))) {
 
 # # quick QA figure -- full study area boundary + PA nodes for context,
 # # even though the raster data itself only covers this species' corridor extent
-grad <- hypso.colors(15, "dem_screen")
-overlap <- rast(here(dir_habitat_overlap, "MAAM_habitat_overlap.tif"))
-
-p <- ggplot() +
-  geom_spatraster(data = overlap, maxcell = 500000) +
-  geom_spatvector(data = study_area, fill = NA, colour = "gray20", linewidth = 0.8) +
-  geom_spatvector(data = nodes_v, fill = "lightblue", colour = "grey20", alpha = 0.3) +
-  scale_x_continuous(expand = c(0, 0)) +
-  scale_y_continuous(expand = c(0, 0)) +
-  scale_fill_gradientn(colours = grad, na.value = NA, name = "Connectivity") +
-  theme_bw()
-
-plot(p)
-
-#save to file
-png_path <- file.path(fig_dir, paste0(sp, "_habitat_overlap.png"))
-ggsave(plot = p, width = 10, height = 8, filename = png_path)
-message("  -> saved ", png_path)
+# grad <- hypso.colors(n = 15, palette = "dem_screen")
+# overlap <- rast(here(dir_habitat_overlap, "MAAM_habitat_overlap.tif"))
+# pa_patches <- read_sf(here(output_dir, "pa_patches.gpkg"))
+# water <- rast(here(data_dir, "water_raster.tif"))
+# water <- ifel(water == 4, 1, NA)  # keep only QA class 4 (water), everything else -> NA
+# names(water) <- "water_mask"
+# 
+# p <- ggplot() +
+#   geom_spatraster(data = water, aes(fill = water_mask), maxcell = 500000, na.rm = TRUE) +
+#   scale_fill_gradient(low = "lightblue", high = "lightblue", na.value = NA, guide = "none") +
+#   ggnewscale::new_scale_fill() +
+#   geom_spatraster(data = overlap, maxcell = 500000) +
+#   geom_spatvector(data = study_area, fill = NA, color = "gray20", linewidth = 0.8) +
+#   geom_spatvector(data = pa_patches, fill = "violet", color = "gray50", linewidth = 0.3) +
+#   #geom_spatvector(data = nodes_v, fill = "lightblue", colour = "grey20", alpha = 0.3) +
+#   scale_x_continuous(expand = c(0, 0)) +
+#   scale_y_continuous(expand = c(0, 0)) +
+#   scale_fill_gradientn(colours = grad, na.value = NA, name = "Couverture du corridor") +
+#   theme_bw()
+# plot(p)
+# 
+# #save to file
+# png_path <- file.path(fig_dir, paste0(sp, "_habitat_overlap.png"))
+# ggsave(plot = p, width = 10, height = 8, filename = png_path)
+# message("  -> saved ", png_path)

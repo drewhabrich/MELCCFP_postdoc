@@ -15,7 +15,7 @@
 ## Author: Andrew Habrich
 ##
 ## Notes ------------------------- ##
-source(file.path("scripts", "setup_script.R"))
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
 
 ## 1. Load the protected area model shapefile ##################################
 pa_mod <- vect(here(interm_dir, "pa_model_5km2.shp"),
@@ -60,7 +60,7 @@ specieslist <- readxl::read_excel(here(data_dir, "specieslist.xlsx"))
 ## ---- Sample test: restrict to a couple of example species ----
 ## Set to NULL to run the full species list; set to a vector of species
 ## codes to quickly test/compare just those species instead.
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
 if (!is.null(species_subset)) {
   specieslist <- specieslist |> filter(species %in% species_subset)
 }
@@ -183,5 +183,5 @@ for (i in seq_len(nrow(specieslist))) {
 })
 
 kernel_params_tbl <- bind_rows(kernel_params)
-write_csv(kernel_params_tbl, file.path(interm_dir, "dispersal_kernel_params.csv"))
+write_csv(kernel_params_tbl, file.path(table_dir, "dispersal_kernel_params.csv"))
 

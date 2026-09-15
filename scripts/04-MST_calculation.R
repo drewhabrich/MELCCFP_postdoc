@@ -13,7 +13,7 @@
 ## Author: Andrew Habrich
 ##
 ## Notes ------------------------- ##
-source(file.path("scripts", "setup_script.R"))
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
 
 plot_diagnostics <- TRUE   # set FALSE to skip the per-species QA plot() calls (e.g. for an unattended batch run)
 # NOTE: unlike script 03, this script doesn't skip already-done species --
@@ -24,16 +24,18 @@ plot_diagnostics <- TRUE   # set FALSE to skip the per-species QA plot() calls (
 
 # Load required files
 pa_nodes <- st_read(here(output_dir, "pa_ctroidnodes.shp"))
-dkernel_params <- read_csv(here(interm_dir, "dispersal_kernel_params.csv"))
+## pa_patches: the actual PA polygons (site_id-keyed), needed to draw each
+## MST edge's line from patch boundary to patch boundary rather than
+## centroid to centroid -- see the "Convert to a vector layer" section below.
+pa_patches <- read_sf(here(output_dir, "pa_patches.gpkg"))
+dkernel_params <- read_csv(here(table_dir, "dispersal_kernel_params.csv"))
 summary_rows <- list()
 
-## Node coordinates, keyed by site_id -- used below to build line geometries
+## Node coordinates, keyed by site_id -- used below for the diagnostic
+## plot() layout only (line geometries are now built from pa_patches
+## polygon boundaries, not centroids -- see "Convert to a vector layer" below).
 node_coords <- st_coordinates(pa_nodes)
 rownames(node_coords) <- pa_nodes$site_id
-node_coords_tbl <- node_coords |>
-  as.data.frame() |>
-  tibble::rownames_to_column("site_id") |>
-  as_tibble()
 
 # Load in species list for analysis
 specieslist <- readxl::read_excel(here(data_dir, "specieslist.xlsx"))
@@ -42,7 +44,7 @@ specieslist <- readxl::read_excel(here(data_dir, "specieslist.xlsx"))
 ## Set to NULL to run the full species list; set to a vector of species
 ## codes to quickly test/compare just those species instead (must already
 ## have {sp}_PA_costs.csv from script 03 for each one).
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
 if (!is.null(species_subset)) {
   specieslist <- specieslist %>% filter(species %in% species_subset)
 }
@@ -76,7 +78,7 @@ for (i in seq_len(nrow(specieslist))) {
     filter(dispersal_probability >= p_threshold)
   
   g <- graph_from_data_frame(
-    edges %>% dplyr::select(from, to, weight = cost_dist, dispersal_probability),
+    edges %>% dplyr::select(from, to, weight = cost_dist, euclidean_dist, dispersal_probability),
     directed = FALSE,
     vertices = pa_nodes$site_id
   )
@@ -101,16 +103,40 @@ for (i in seq_len(nrow(specieslist))) {
   message("  -> ", nrow(mst_edges), " MST edge(s) saved to ", out_edges_path)
   
   weakest_link_prob <- if (nrow(mst_edges) > 0) min(mst_edges$dispersal_probability) else NA_real_
-  
+  mean_link_prob <- if (nrow(mst_edges) > 0) mean(mst_edges$dispersal_probability) else NA_real_
+
+  ## detour factor: how much farther the cheapest cost-path is than a
+  ## straight line, per MST edge -- flags edges where resistance forces a
+  ## long detour relative to geography alone. NA (not Inf) for edges whose
+  ## patches already touch (euclidean_dist = 0), since the ratio is
+  ## undefined there.
+  detour_factor <- ifelse(mst_edges$euclidean_dist > 0,
+                           mst_edges$weight / mst_edges$euclidean_dist, NA_real_)
+  n_detour_valid <- sum(!is.na(detour_factor))
+  mst_degree <- degree(mst_g)
+  ## cost-weighted diameter: worst-case cumulative cost between the two
+  ## most distant connected PAs (NA, not 0, when there are no MST edges).
+  mst_diameter_cost <- if (nrow(mst_edges) > 0) diameter(mst_g, weights = E(mst_g)$weight) else NA_real_
+
   summary_rows[[sp]] <- tibble(
-    species              = sp,
-    kernel_p_threshold   = p_threshold,
-    n_nodes              = vcount(g),
-    n_candidate_edges    = ecount(g),
-    n_mst_edges          = ecount(mst_g),
-    n_components         = n_components,
-    total_mst_cost       = sum(E(mst_g)$weight),
-    weakest_link_prob    = weakest_link_prob  # lowest dispersal probability among the MST's own edges
+    species                    = sp,
+    kernel_p_threshold         = p_threshold,
+    n_nodes                    = vcount(g),
+    n_candidate_edges          = ecount(g),
+    n_isolated_nodes           = sum(degree(g) == 0),  # nodes with no candidate pair within dispersal range
+    n_mst_edges                = ecount(mst_g),
+    n_components               = n_components,
+    total_mst_cost             = sum(E(mst_g)$weight),
+    mean_mst_edge_cost         = if (nrow(mst_edges) > 0) mean(mst_edges$weight) else NA_real_,
+    median_mst_edge_cost       = if (nrow(mst_edges) > 0) median(mst_edges$weight) else NA_real_,
+    max_mst_edge_cost          = if (nrow(mst_edges) > 0) max(mst_edges$weight) else NA_real_,
+    total_mst_euclidean_dist_m = if (nrow(mst_edges) > 0) sum(mst_edges$euclidean_dist) else NA_real_,
+    mean_detour_factor         = if (n_detour_valid > 0) mean(detour_factor, na.rm = TRUE) else NA_real_,
+    max_detour_factor          = if (n_detour_valid > 0) max(detour_factor, na.rm = TRUE) else NA_real_,
+    mst_diameter_cost          = mst_diameter_cost,
+    max_node_degree            = if (length(mst_degree) > 0) max(mst_degree) else NA_real_,
+    weakest_link_prob          = weakest_link_prob,  # lowest dispersal probability among the MST's own edges
+    mean_link_prob             = mean_link_prob
   )
   
   if (!is.na(weakest_link_prob) && weakest_link_prob < 5 * p_threshold) {
@@ -130,20 +156,21 @@ for (i in seq_len(nrow(specieslist))) {
   }
 
   ### Convert to a vector layer for saving #######################################
-  edges_coords <- mst_edges |>
-    left_join(node_coords_tbl, by = c("from" = "site_id")) |>
-    rename(x_from = X, y_from = Y) |>
-    left_join(node_coords_tbl, by = c("to" = "site_id")) |>
-    rename(x_to = X, y_to = Y)
+  ## Boundary-to-boundary (edge-to-edge), not centroid-to-centroid: each
+  ## MST edge's line runs between the nearest points on the two patches'
+  ## actual boundaries (sf::st_nearest_points(), same endpoint method
+  ## script 05 uses). Still a STRAIGHT line, not the routed least-cost
+  ## corridor -- that's script 05's job -- this just anchors the line to
+  ## the patches' edges instead of their centroids.
+  edge_lines <- Map(function(from_id, to_id) {
+    origin_poly <- pa_patches[as.character(pa_patches$site_id) == as.character(from_id), ]
+    dest_poly   <- pa_patches[as.character(pa_patches$site_id) == as.character(to_id), ]
+    st_nearest_points(origin_poly, dest_poly)
+  }, mst_edges$from, mst_edges$to)
 
-  mst_lines <- edges_coords |>
-    rowwise() |>
-    mutate(geometry = st_sfc(
-      st_linestring(matrix(c(x_from, x_to, y_from, y_to), ncol = 2)),
-      crs = st_crs(pa_nodes)
-    )) |>
-    ungroup() |>
-    st_as_sf()
+  mst_lines <- mst_edges
+  st_geometry(mst_lines) <- do.call(c, edge_lines)
+  st_crs(mst_lines) <- st_crs(pa_patches)
 
   ## save to a gpkg
   st_write(mst_lines, lines_out_path, delete_dsn = TRUE)
@@ -152,5 +179,5 @@ for (i in seq_len(nrow(specieslist))) {
 
 summary_tbl <- bind_rows(summary_rows)
 summary_tbl
-write_csv(summary_tbl, file.path(dir_mst, "mst_summary.csv"))
+write_csv(summary_tbl, file.path(table_dir, "mst_summary.csv"))
 

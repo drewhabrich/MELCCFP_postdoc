@@ -19,7 +19,8 @@
 #
 # Also NOT implemented here (need data we don't have):
 #     we substitute a fixed high rank ("Other" in suitability_rank_scale.csv)
-#     for any land-cover class outside decid/mixed/conif/wetland/grass/shrub
+#     for any land-cover class outside decid/mixed/conif/wetland_open/
+#     wetland_forested/grass/shrub
 #
 # Run this ONCE (or whenever specieslist.xlsx changes), BEFORE stage 01.
 # -- review its output before running the rest of the pipeline on it.
@@ -27,8 +28,8 @@
 # Requires three small mapping tables you fill in once
 #
 #   landcover_class_lookup.csv
-#     Maps YOUR landcover.tif class codes to decid/mixed/conif/wetland/
-#     grass/shrub/other. decid/mixed/conif are treated as "forest" --
+#     Maps YOUR landcover.tif class codes to decid/mixed/conif/
+#     wetland_open/wetland_forested/grass/shrub/other. decid/mixed/conif are treated as "forest" --
 #     only those cells get an age penalty applied.
 #
 #   forest_age_class_lookup.csv
@@ -51,8 +52,8 @@ forest_age_lookup <- read_csv(here("data", "lookup_tables", "forest_age_class_lo
 forest_type_lookup <- read_csv(here("data", "lookup_tables", "forest_type_class_lookup.csv"), show_col_types = FALSE)
 rank_scale <- read_csv(here("data", "lookup_tables", "suitability_rank_scale.csv"), show_col_types = FALSE)
 
-non_forest_categories <- c(wetland = "wetland", grass = "grass", shrub = "shrub",
-                           agriculture = "agriculture")
+non_forest_categories <- c(wetland_open = "wetland_open", wetland_forested = "wetland_forested",
+                           grass = "grass", shrub = "shrub", agriculture = "agriculture")
 forest_type_cols <- c(conif = "conif", decid = "decid", mixed = "mixed")
 
 # Water (LULC_code 4) isn't in non_forest_categories -- it uses a shared
@@ -60,6 +61,12 @@ forest_type_cols <- c(conif = "conif", decid = "decid", mixed = "mixed")
 # species by dispersal_type: species that cross water cheaply (flying,
 # aquatic) get a lower rank; fossorial species get a higher one.
 dispersal_type_water_adjustment <- c(flying = -1, aquatic = -1, fossorial = 1, terrestrial = 0)
+
+# Roads/railway (LULC_codes 100/200/300/400/500/600) also use a shared
+# fixed_rank -- flying species can cross these cheaply (fly over), so they
+# get a rank discount; other dispersal types are unaffected.
+road_rail_codes <- c(100, 200, 300, 400, 500, 600)  # Major/Minor/Forestry A-C roads, Railway
+dispersal_type_road_adjustment <- c(flying = -1, aquatic = 0, fossorial = 0, terrestrial = 0)
 
 # default penalty (in rank steps, i.e. doublings) applied to forest cells
 # whose age class isn't in a species' preferred set -- edit the resulting
@@ -112,7 +119,7 @@ for (i in seq_len(nrow(species_raw))) {
   # species' average rank across its own conif/decid/mixed suitability,
   # i.e. assume typical forest suitability when the exact type/age can't
   # be determined.
-  forest_fallback_rank <- mean(sp_rank_by_type$rank, na.rm = TRUE)
+  forest_fallback_rank <- round(mean(sp_rank_by_type$rank, na.rm = TRUE))
 
   water_adjustment <- dispersal_type_water_adjustment[species_raw$dispersal_type[i]]
   if (is.na(water_adjustment)) {
@@ -121,11 +128,19 @@ for (i in seq_len(nrow(species_raw))) {
     water_adjustment <- 0
   }
 
+  road_adjustment <- dispersal_type_road_adjustment[species_raw$dispersal_type[i]]
+  if (is.na(road_adjustment)) {
+    warning(sp, ": dispersal_type '", species_raw$dispersal_type[i],
+            "' not recognized -- no road/rail rank adjustment applied.")
+    road_adjustment <- 0
+  }
+
   landcover_rank_tbl <- landcover_lookup %>%
     filter(LULC_code != 2) %>%
     left_join(sp_rank_by_category %>% dplyr::select(habitat_category, rank), by = "habitat_category") %>%
     mutate(rank = coalesce(fixed_rank, rank)) %>%
     mutate(rank = if_else(LULC_code == 4, pmax(rank + water_adjustment, 0), rank)) %>%
+    mutate(rank = if_else(LULC_code %in% road_rail_codes, pmax(rank + road_adjustment, 0), rank)) %>%
     dplyr::select(cover_class = LULC_code, rank) %>%
     bind_rows(tibble(cover_class = 2, rank = forest_fallback_rank))
 

@@ -79,12 +79,12 @@
 # dispatch below rebuilds the cluster and marks that batch failed rather
 # than letting the whole run abort.
 # ============================================================
-source(file.path("scripts", "setup_script.R"))
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
 
 ## ---- Sample test: restrict to a couple of example species ----
 ## Set to NULL to run the full species list; set to a vector of species
 ## codes to test/compare just those species instead.
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
 
 overwrite <- TRUE  # set TRUE to force recomputation of species already done
 
@@ -324,7 +324,7 @@ tryCatch({
     ## Merge every valid edge's line into one vector layer for this species --
     ## this merged file is what script 06 reads.
     corridors <- do.call(rbind, edge_paths)
-    st_write(corridors, out_path, delete_dsn = TRUE, quiet = TRUE)
+    st_write(corridors, out_path, delete_dsn = TRUE, delete_layer = TRUE, quiet = TRUE)
     message("  -> ", nrow(corridors), " of ", n_edges, " edge(s) traced and saved to ", out_path,
             if (n_failed > 0) paste0(" (", n_failed, " edge(s) skipped)") else "")
   }

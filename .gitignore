@@ -1,8 +1,7 @@
-# folders 
+# folders
 /data
 /output
 /.posit
-
 # R specific files
 .Rproj
 .Rproj.user
@@ -13,6 +12,6 @@
 .httr-oauth
 .DS_Store
 .quarto
-
 # other filetypes
 .md
+MELCCFP_postdoc.Rproj

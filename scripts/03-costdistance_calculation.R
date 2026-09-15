@@ -32,14 +32,14 @@
 ## Author: Andrew Habrich
 ##
 ## Notes ------------------------- ##
-source(file.path("scripts", "setup_script.R"))
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
 library(dplyr)
 
 ## ---- Sample test: restrict to a couple of example species ----
 ## Set to NULL to run the full species list; set to a vector of species
 ## codes to quickly test/compare just those species instead (e.g. before
 ## committing to a full multi-hour run across all 10).
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
 
 overwrite <- TRUE  # set TRUE to force recomputation of species already done
 
@@ -54,7 +54,9 @@ cd_buffer_min_m <- 1000
 ## How many origins to hand to the cluster per parLapplyLB() call.
 cd_batch_size <- 50
 
-n_cores <- max(1, parallel::detectCores() - 10)  # tune down if you want to keep using your machine for other things
+#n_cores <- max(1, parallel::detectCores() - 12)  # tune down if you want to keep using your machine for other things
+# SERVER HAS 64 CORES
+n_cores <- 10
 
 ## 1. Load required files ---------------------------------------
 # pa_patches: sf POLYGON object of protected areas, must have a unique
@@ -78,7 +80,11 @@ if (!is.null(species_subset)) {
 ## to just this origin's search area. References `candidate_pairs` /
 ## `resistance_path` as free variables -- exported to the cluster
 ## (setup_cluster(), below) each time they change (i.e. each species).
+## Returns list(data = <the pair-cost tibble>, timing = <per-step seconds
+## for this origin, for profiling>) -- timing is split out from data so
+## the diagnostic columns never leak into {sp}_PA_costs.csv.
 cost_distance_for_origin <- function(origin_id, buffer_mult = 1) {
+  t0 <- Sys.time()
   origin_poly <- pa_patches[as.character(pa_patches$site_id) == as.character(origin_id), ]
 
   dest_pairs <- candidate_pairs  |>  filter(from == origin_id)
@@ -90,25 +96,51 @@ cost_distance_for_origin <- function(origin_id, buffer_mult = 1) {
 
   buffer_dist <- max(max(dest_pairs$euclidean_dist) * cd_buffer_frac, cd_buffer_min_m) * buffer_mult
   crop_ext <- ext(vect(rbind(origin_poly, dest_polys))) + buffer_dist
+  t_setup <- Sys.time()
 
   friction <- crop(rast(resistance_path), crop_ext)
+  t_crop <- Sys.time()
 
   origin_mask <- rasterize(vect(origin_poly), friction)
   friction <- ifel(!is.na(origin_mask), sentinel_value, friction)
+  t_mask <- Sys.time()
 
   cost_surface <- costDist(friction, target = sentinel_value, scale = 1)
+  t_costdist <- Sys.time()
+
   cost_vals <- terra::extract(cost_surface, vect(dest_polys), fun = "min", na.rm = TRUE)[[2]]
+  t_extract <- Sys.time()
 
   terra::tmpFiles(remove = TRUE)
+  t_cleanup <- Sys.time()
+
+  timing <- tibble(
+    origin_id    = origin_id,
+    buffer_mult  = buffer_mult,
+    n_dest       = length(dest_ids),
+    n_cells      = ncell(friction),
+    setup_sec    = as.numeric(difftime(t_setup, t0, units = "secs")),
+    crop_sec     = as.numeric(difftime(t_crop, t_setup, units = "secs")),
+    mask_sec     = as.numeric(difftime(t_mask, t_crop, units = "secs")),
+    costdist_sec = as.numeric(difftime(t_costdist, t_mask, units = "secs")),
+    extract_sec  = as.numeric(difftime(t_extract, t_costdist, units = "secs")),
+    cleanup_sec  = as.numeric(difftime(t_cleanup, t_extract, units = "secs")),
+    total_sec    = as.numeric(difftime(t_cleanup, t0, units = "secs"))
+  )
 
   if (any(is.na(cost_vals)) && buffer_mult == 1) {
-    return(cost_distance_for_origin(origin_id, buffer_mult = 2))
+    retry <- cost_distance_for_origin(origin_id, buffer_mult = 2)
+    retry$timing <- bind_rows(timing, retry$timing)
+    return(retry)
   }
 
-  tibble(from = origin_id, to = dest_ids,
-         euclidean_dist = dest_pairs$euclidean_dist,
-         euclidean_kernel_prob = dest_pairs$euclidean_kernel_prob,
-         cost_dist = cost_vals)
+  list(
+    data = tibble(from = origin_id, to = dest_ids,
+                  euclidean_dist = dest_pairs$euclidean_dist,
+                  euclidean_kernel_prob = dest_pairs$euclidean_kernel_prob,
+                  cost_dist = cost_vals),
+    timing = timing
+  )
 }
 
 ## Builds a fresh cluster with everything that doesn't change across
@@ -167,9 +199,8 @@ tryCatch({
     message("Computing cost-distances for: ", sp, " (", nrow(candidate_pairs), " candidate pairs, ",
             n_origins, " origin nodes, ", n_cores, " worker(s))")
 
-    tictoc::tic(paste(sp, "cost-distance calculation"))
-
     results <- vector("list", n_origins)
+    timing_results <- vector("list", n_origins)
     batches <- split(seq_len(n_origins), ceiling(seq_len(n_origins) / cd_batch_size))
     n_done <- 0
 
@@ -189,18 +220,31 @@ tryCatch({
           vector("list", length(b))
         }
       )
-      results[b] <- batch_results
+      results[b] <- lapply(batch_results, function(x) if (is.null(x)) NULL else x$data)
+      timing_results[b] <- lapply(batch_results, function(x) if (is.null(x)) NULL else x$timing)
       n_done <- n_done + length(b)
       message("  ", sp, ": ", n_done, "/", n_origins, " origin(s) processed")
     }
-
-    tictoc::toc()
 
     results <- results[!vapply(results, is.null, logical(1))]
     sp_costs <- bind_rows(results)
 
     write_csv(sp_costs, out_path)
     message("  -> ", nrow(sp_costs), " pair(s) saved to ", out_path)
+
+    ## Profiling: which step of cost_distance_for_origin() actually costs
+    ## the time -- reading/cropping the raster from disk, rasterizing the
+    ## origin mask, the costDist() flood-fill itself, or the zonal
+    ## extract() -- broken down per origin (one row per attempt, so a
+    ## retried origin contributes two rows: buffer_mult 1 and 2).
+    sp_timing <- bind_rows(timing_results[!vapply(timing_results, is.null, logical(1))])
+    timing_out_path <- here(costoutput_dir, paste0(sp, "_costdist_profiling.csv"))
+    write_csv(sp_timing, timing_out_path)
+    message("  -> profiling (mean seconds/origin): crop = ", round(mean(sp_timing$crop_sec), 3),
+            ", mask = ", round(mean(sp_timing$mask_sec), 3),
+            ", costDist = ", round(mean(sp_timing$costdist_sec), 3),
+            ", extract = ", round(mean(sp_timing$extract_sec), 3),
+            " (", nrow(sp_timing), " attempt(s) -> ", timing_out_path, ")")
   }
 
 }, finally = {

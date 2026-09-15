@@ -79,7 +79,14 @@
 # importance per species, not raw density scale (which varies a lot with
 # how many MST edges/PAs a species has).
 # ============================================================
-source(file.path("scripts", "setup_script.R"))
+suppressMessages(suppressWarnings(source(file.path("scripts", "setup_script.R"))))
+
+## ---- Sample test: restrict to a couple of example species ----
+## Set to NULL to run the full species list; set to a vector of species
+## codes to test/compare just those species instead.
+species_subset <- c("MAAM", "ASFL", "DOOR")  # e.g. NULL for all species
+
+overwrite <- TRUE  # set TRUE to force recomputation of species already done
 
 dir_corridors <- here(interm_dir, "corridors")
 if (!dir.exists(dir_corridors)) dir.create(dir_corridors)
@@ -88,13 +95,6 @@ specieslist <- readxl::read_excel(here(data_dir, "specieslist.xlsx"))
 if (!is.null(species_subset)) {
   specieslist <- specieslist %>% filter(species %in% species_subset)
 }
-
-## ---- Sample test: restrict to a couple of example species ----
-## Set to NULL to run the full species list; set to a vector of species
-## codes to test/compare just those species instead.
-species_subset <- c("MAAM", "DOOR")  # e.g. NULL for all species
-
-overwrite <- TRUE  # set TRUE to force recomputation of species already done
 
 ## Gaussian smoothing bandwidth, map units (metres). No principled default
 ## -- a visualization choice trading off how tightly the density surface
