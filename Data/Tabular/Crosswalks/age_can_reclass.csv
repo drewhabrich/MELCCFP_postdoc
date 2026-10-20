@@ -1,0 +1,5 @@
+can_start,can_end,age_class,age_id
+0,30,Young (< 30 yrs),1
+30,60,Medium 1 (~50 yrs),2
+60,90,Medium 2 (~70 yrs),3
+90,151,Old (>90 yrs),4

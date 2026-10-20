@@ -1,0 +1,6 @@
+forest_age_class_id,forest_age_class_name,MAAM,DRPI
+1,Young (<30 yrs),1,2
+2,Medium 1 (~50 yrs),0,0
+3,Medium 2 (~70 yrs),0,0
+4,Old (>90 yrs),0,0
+5,Mixed,1,1

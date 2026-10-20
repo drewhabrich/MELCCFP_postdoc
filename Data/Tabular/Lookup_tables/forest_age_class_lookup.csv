@@ -1,0 +1,16 @@
+forest_age_class,age_category,distance
+1,jeune,0
+1,mature,1
+1,forêt ancienne,3
+2,jeune,1
+2,mature,0
+2,forêt ancienne,2
+3,jeune,2
+3,mature,0
+3,forêt ancienne,1
+4,jeune,3
+4,mature,1
+4,forêt ancienne,0
+5,jeune,0
+5,mature,1
+5,forêt ancienne,0

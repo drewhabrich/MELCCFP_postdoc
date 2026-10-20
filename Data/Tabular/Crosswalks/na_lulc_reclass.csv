@@ -1,0 +1,17 @@
+nalc_id,nalc_class,cover_name,cover_id
+0,NA,NA,NA
+1,Temperate or Subpolar Needleaf Forest,Coniferous Forest,3
+2,Subpolar Taiga Needleleaf Forest,Coniferous Forest,3
+5,Temperate or Subpolar Broadleaf Deciduous Forest,Deciduous Forest,1
+6,Mixed Forest,Mixed Forest,2
+8,Temperate or Subpolar Shrubland,NA,NA
+10,Temperate or Subpolar Grassland,NA,NA
+11,Subpolar or Polar Shrubland-Lichen-Moss,NA,NA
+12,Subpolar or Polar Grassland-Lichen-Moss,NA,NA
+13,Subpolar or Polar Barren-Lichen-Moss,NA,NA
+14,Wetland,NA,NA
+15,Cropland,NA,NA
+16,Barren Land,NA,NA
+17,Urban and Built-up,NA,NA
+18,Water,NA,NA
+19,Snow and Ice,NA,NA

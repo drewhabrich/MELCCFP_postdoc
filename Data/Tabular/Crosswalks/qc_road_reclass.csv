@@ -1,0 +1,12 @@
+qc_class,class_name,class_id
+Artère,Major,"		1"
+Collectrice municipale,Major,"		1"
+Autoroute,Major,"		1"
+Collectrice de transit,Major,"		1"
+Nationale,Major,"		1"
+Régionale,Major,"		1"
+Locale,Minor,"		2"
+Accès aux ressources,Resource,3
+Accès aux ressources et aux localités isolées,Resource,3
+Rue piétonne,Resource,3
+Sans classe,Resource,3

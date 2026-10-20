@@ -1,0 +1,16 @@
+nlcd_id,nlcd_class,class_name,cover_class_id
+11,Open water,Water,NA
+21,"Developed, Open Space",Urban,NA
+22,"Developed, Low Intensity",Urban,NA
+23,"Developed, Medium Intensity",Urban,NA
+24,"Developed, High Intensity",Urban,NA
+31,Barren,Barren,NA
+41,Deciduous Forest,Forest,1
+42,Evergreen Forest,Forest,3
+43,Mixed Forest,Forest,2
+52,Shrub/Scrub,Forest,NA
+71,Grasland/Herbaceous,Grassland,NA
+81,Pasture/Hay,Agriculture,NA
+82,Cultivated Crops,Agriculture,NA
+90,Woody Wetlands,Wetland forested,NA
+95,Emergent Herbaceous Wetlands,Wetland open,NA

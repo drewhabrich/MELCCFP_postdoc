@@ -1,0 +1,15 @@
+class_id,class,ASFL,AQCH,MAAM,DOOR,DRPI
+1,Agriculture,2,,32,2,8
+2,Forest,8,,1,8,1
+31,Wetland open,2,,32,1,8
+32,Wetland forested,8,,4,8,2
+4,Water,2,,64,4,8
+5,Urban,32,,64,32,32
+6,Barren,2,,32,4,8
+7,Grassland,2,,32,1,8
+100,Major roads,32,,64,32,32
+200,Minor roads,16,,32,16,16
+300,Forestry roads A,8,,16,8,4
+400,Forestry roads B,8,,16,8,4
+500,Forestry roads C,8,,16,8,4
+600,Railway,16,,64,16,16

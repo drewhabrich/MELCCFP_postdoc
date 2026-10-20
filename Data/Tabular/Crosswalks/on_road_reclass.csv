@@ -1,0 +1,14 @@
+on_class,class_name,class_id
+Arterial,Major,1
+Expressway / Highway,Major,1
+Ramp,Major,1
+Service,Major,1
+Freeway,Major,1
+Rapid Transit,Major,1
+Resource / Recreation,Minor,2
+Local / Street,Minor,2
+Collector,Minor,2
+Local / Strata,Minor,2
+Alleyway / Laneway,Minor,2
+Local / Unknown,Minor,2
+Winter,Minor,2

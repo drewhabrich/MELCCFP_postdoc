@@ -1,0 +1,9 @@
+us_id,us_class,class_name,class_id
+S1100,Primary road,Major,1
+S1200,Secondary road,Major,1
+S1400,Local,Minor,2
+S1500,Vehicular trail (4WD),Minor,2
+S1630,Ramp,Major,1
+S1640,Service,Major,1
+S1730,Alley,Minor,2
+S1740,Private road,Minor,2

@@ -1,0 +1,4 @@
+us_id,us_name,age_class,age_id
+10,Primary forests,Old (>90 yrs),4
+20,Young secondary forests (<= 20 yrs),Young (< 30 yrs),1
+30,Old secondary forest (> 20 yrs),Medium 2 (~70 yrs),3

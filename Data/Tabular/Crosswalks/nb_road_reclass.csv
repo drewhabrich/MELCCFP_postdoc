@@ -1,0 +1,21 @@
+nb_class,class_name,class_id
+Expressway/highway,Major,1
+Ramp,Major,1
+Freeway,Major,1
+Service Lane,Major,1
+Arterial,Major,1
+NBDNR Resource Road F3,Major,1
+NBDNR Resource Road F4,Major,1
+NBDNR Resource Road F1,Major,1
+NBDNR Resource Road F2,Major,1
+NBDNR Resource Road F5,Major,1
+NBDNR Resource Road F6,Major,1
+Local/street,Minor,2
+Local/unknown,Minor,2
+DOT Local Named (Gravel),Minor,2
+NBDOT Local Numbered,Minor,2
+NBDOT Road Public Access,Minor,2
+Collector,Minor,2
+Unknown,Minor,2
+Local/strata,Minor,2
+NBDOT Local Named,Minor,2

@@ -1,0 +1,13 @@
+# Folders
+/Data/Spatial
+/Intermediate
+/Output
+/Figures
+
+# R
+*.Rproj
+*.Rproj.user
+.Rhistory
+.DS_Store
+
+.Rproj.user

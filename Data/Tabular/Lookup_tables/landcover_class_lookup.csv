@@ -1,0 +1,15 @@
+﻿LULC_code,class_en,habitat_category,fixed_rank
+1,Agriculture,agriculture,
+2,Forest,,
+31,Wetland open,wetland_open,
+32,Wetland forested,wetland_forested,
+4,Water,,5
+5,Urban,,6
+6,Barren,shrub,
+7,Grassland,grass,
+100,Major roads,,6
+200,Minor roads,,5
+300,Forestry roads A,,5
+400,Forestry roads B,,4
+500,Forestry roads C,,4
+600,Railway,,6

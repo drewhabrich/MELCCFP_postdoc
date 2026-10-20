@@ -1,0 +1,39 @@
+aafc_id,aafc_class,class_name,class_id
+21,Settlement,Urban,5
+22,High Reflectance Settlement           ,Urban,5
+24,Settlement Forest,Urban,5
+25,Roads,Urban,5
+28,Vegetated Settlement,Urban,5
+29,Very High Reflectance Settlement,Urban,5
+31,Water,Water,4
+41,Forest,Forest,2
+42,Forest Wetland,Wetland forested,32
+43,Forest Regenerating after Harvest (<20 years),Forest,2
+44,Forest Wetland Regenerating after Harvest (<20 years),Wetland forested,32
+47,Forest Regenerating after Harvest (20-29 years),Forest,2
+48,Forest Wetland Regenerating after Harvest (20-29 years),Wetland forested,32
+49,Forest Regenerating after Fire (<20 years),Forest,2
+51,Cropland,Agriculture,1
+52,Annual Cropland,Agriculture,1
+55,Land Converted to Cropland,Agriculture,1
+56,Land Converted to Annual Cropland,Agriculture,1
+63,Prairie Grassland,Grassland,7
+64,Temperate Grassland,Grassland,7
+65,Temperate Rainforest Grassland,Grassland,7
+66,Boreal Grassland,Grassland,7
+67,Montane Grassland,Grassland,7
+68,Alpine Tundra Grassland,Grassland,7
+69,Arctic Tundra Grassland,Grassland,7
+73,Prairie Wetland,Wetland open,31
+74,Temperate Wetland,Wetland open,31
+75,Temperate Rainforest Wetland,Wetland open,31
+76,Boreal Wetland,Wetland open,31
+78,Alpine Tundra Wetland,Wetland open,31
+79,Arctic Tundra Wetland,Wetland open,31
+81,Newly-Detected Settlement (<10 years),Urban,5
+82,Newly-Detected High-Reflectance Settlement (<10 years),Urban,5
+84,Newly-Detected Settlement Forest (<10 years),Urban,5
+85,Newly-Detected roads (<10 years),Urban,5
+88,Newly-Detected Vegetated Settlement (<10 years),Urban,5
+89,Newly-Detected Very High Reflectance Settlement (<10 years),Urban,5
+91,Other Land,Barren,6

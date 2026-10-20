@@ -1,0 +1,29 @@
+Abreviation,Common_name,Nom_commun,Nom_scientifique,Class,Longevite_ans,Longueur_cm,Dispersion_km,Domaine_vital_ha,Feuillus,Mixte,Coniferes,Humide,Prairies,Arbustive,Couverture,Age,Donnees,Regionale,H,HR,R,W
+PLCI,Red-backed salamander,Salamandre cendree,Plethodon cinereus,Amphibia,8.5,4.1,0.09,0.0121,Highly suitable,Suitable,Suitable,Unsuitable,Unsuitable,Unsuitable,>60,"mature, foret ancienne",Good,-,-,Yes,-,1
+MYGA,Southern red-backed vole,Campagnol a dos roux de Gapper,Myodes gapperi,Mammalia,1.6,10.4,0.03,1.265,Suitable,Highly suitable,Highly suitable,Suitable,Unsuitable,Suitable,>50,"mature, foret ancienne",Good,-,-,-,-,1
+GLSA,Northern flying squirrel,Grand polatouche,Glaucomys sabrinus,Mammalia,4,18.3,5.5,1.325,Suitable,Highly suitable,Highly suitable,Suitable,Unsuitable,Unsuitable,>55,"mature, foret ancienne",Good,-,-,-,-,1
+BLBR,Short-tailed shrew,Grande musaraigne,Blarina brevicauda,Mammalia,1.375,10.2,0.55,1.5,Highly suitable,Highly suitable,Suitable,Suitable,Highly suitable,Highly suitable,-,"mature, foret ancienne",Medium,-,-,Yes,-,1
+CSCA,Beaver,Castor,Castor canadensis,Mammalia,11,65,9.075,7.7,Highly suitable,Highly suitable,Suitable,Suitable,Unsuitable,Highly suitable,40-60,"jeune, mature",Good,-,-,-,-,1
+GLIN,Wood turtle,Tortue des bois,Glyptemys insculpta,Reptilia,47,18,0.219,10.2,Highly suitable,Highly suitable,Suitable,Highly suitable,Suitable,Suitable,<20,"jeune, mature",Good,-,-,Yes,Yes,1
+CNCA,Spruce grouse,Tetras du Canada,Canachites canadensis,Aves,6.5,39.75,2.165,14.5,Suitable,Suitable,Highly suitable,Suitable,Unsuitable,Unsuitable,>60,"jeune, mature",Good,Yes,Yes,-,-,1
+BOUM,Ruffed grouse,Gelinotte huppee,Bonasa umbellus,Aves,6.4,45,2.95,28,Highly suitable,Highly suitable,Suitable,Suitable,Unsuitable,Highly suitable,>70,"jeune, mature",Good,-,Yes,-,-,1
+PEGR,Grey partridge,Perdrix grise,Perdix perdix,Aves,5,31.7,4.3,47.45,Unsuitable,Unsuitable,Unsuitable,Unsuitable,Highly suitable,Suitable,20-60,jeune,Good,-,-,-,-,1
+DRPI,Pileated woodpecker,Grand Pic,Dryocopus pileatus,Aves,10.5,42,12.35,50.4,Highly suitable,Highly suitable,Suitable,Unsuitable,Unsuitable,Unsuitable,>40,"mature, foret ancienne",Good,Yes,-,Yes,-,1
+MAAM,American marten,Martre d'Amerique,Martes americana,Mammalia,5.65,38,14.3,377,Suitable,Highly suitable,Highly suitable,Unsuitable,Unsuitable,Unsuitable,>50,"mature, foret ancienne",Good,Yes,Yes,Yes,-,1
+MEGA,Wild turkey,Dinde,Meleagris gallopavo,Aves,15,112.5,8.7,386,Highly suitable,Highly suitable,Highly suitable,Suitable,Suitable,Suitable,>40,"jeune, mature",Medium,-,-,-,-,1
+ODVI,White-tailed deer,Cerf de Virginie,Odocoileus virginianus,Mammalia,6.75,175,13.135,400,Suitable,Suitable,Highly suitable,Suitable,Suitable,Highly suitable,>65,tout,Good,-,Yes,Yes,-,1
+ALAL,Moose,Orignal,Alces alces,Mammalia,20.75,287.5,19,1000,Highly suitable,Highly suitable,Highly suitable,Highly suitable,Suitable,Highly suitable,>60,"mature, foret ancienne",Good,Yes,Yes,-,-,1
+CALA,Coyote,Coyote,Canis latrans,Mammalia,8,101,39.5,1179,Highly suitable,Suitable,Suitable,Suitable,Highly suitable,Highly suitable,<20,jeune,Good,Yes,-,-,-,1
+PEPE,Fischer,Pekan,Pekania pennanti,Mammalia,6,55.8,5.6,2500,Highly suitable,Highly suitable,Highly suitable,Unsuitable,Unsuitable,Unsuitable,>60,"mature, foret ancienne",Good,Yes,-,-,-,1
+LYCA,Lynx,Lynx,Lynx canadensis,Mammalia,16,82,100,2570,Suitable,Highly suitable,Highly suitable,Unsuitable,Unsuitable,Highly suitable,>60,jeune,Good,Yes,-,-,-,1
+URAM,Black bear,Ours noir,Ursus americanus,Mammalia,23,150,49,7075,Highly suitable,Highly suitable,Highly suitable,Highly suitable,Suitable,Highly suitable,-,tout,Good,Yes,-,Yes,-,1
+CALU,Grey wolf,Loup,Canis lupus,Mammalia,12,144.5,92.7,31500,Suitable,Suitable,Highly suitable,Suitable,Suitable,Highly suitable,-,tout,Good,-,-,Yes,Yes,1
+RATA,Woodland Caribou,Caribou,Rangifer tarandus caribou,Mammalia,17.5,207.5,52.5,35000,Unsuitable,Suitable,Highly suitable,Highly suitable,Unsuitable,Unsuitable,-,"mature, foret ancienne",Good,Yes,-,-,-,1
+HESC,Four-toed salamander,Salamandre a quatre orteils,Hemidactylium scutatum,Amphibia,9,6.985,0.09,0.0024,Highly suitable,Highly suitable,Unsuitable,Highly suitable,Unsuitable,Highly suitable,>70,mature,Poor,Yes,-,-,,2
+DOOR,Bobolink,Goglu des pres,Dolichonyx oryzivorus,Aves,9,18.35,19,0.7,Unsuitable,Unsuitable,Unsuitable,Highly suitable,Highly suitable,Unsuitable,<20,jeune,Good,Yes,-,-,,2
+OPVE,Smooth green snake,Couleuvre verte,Opheodrys vernalis,Reptilia,6,37.4,1.7,1,Suitable,Suitable,Suitable,Highly suitable,Highly suitable,Highly suitable,<60,jeune,Poor,-,-,-,,2
+SEAU,Ovenbird,Paruline couronnee,Seiurus aurocapilla,Aves,10,14.5,3.7,4.2,Highly suitable,Highly suitable,Suitable,Unsuitable,Unsuitable,Unsuitable,>60,"mature, foret ancienne",Good,-,-,Yes,,2
+CABI,Bicknell's thrush,Grive de Bicknell,Catharus bicknelli,Aves,8,17,200,13.9,Unsuitable,Suitable,Highly suitable,Unsuitable,Unsuitable,Highly suitable,>70,jeune,Good,Yes,Yes,-,,2
+ASFL,Short-eared owl,Hibou des marais,Asio flammeus,Aves,21.75,37,575,71,Unsuitable,Unsuitable,Suitable,Highly suitable,Highly suitable,Suitable,<20,jeune,Good,Yes,Yes,-,,2
+CICY,Hen harrier or Northern harrier,Busard Saint-Martin,Circus cyaneus,Aves,12,45.5,215,5400,Unsuitable,Unsuitable,Suitable,Highly suitable,Highly suitable,Suitable,<20,jeune,Medium,-,Yes,-,,2
+AQCH,Golden eagle,Aigle royal,Aquila chrysaetos canadensis,Aves,32,80,41,7445,Suitable,Suitable,Highly suitable,Highly suitable,Highly suitable,Highly suitable,<45,mature,Good,-,Yes,-,,2
